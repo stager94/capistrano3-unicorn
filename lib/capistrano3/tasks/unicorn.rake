@@ -1,8 +1,8 @@
 namespace :load do
   task :defaults do
-    set :unicorn_pid, -> { File.join(current_path, "tmp", "pids", "unicorn.pid") }
+    set :unicorn_pid, -> { File.join("#{current_path}/backend", "tmp", "pids", "unicorn.pid") }
     set :unicorn_rack_env, -> { fetch(:rails_env) ? fetch(:rails_env) : "deployment" }
-    set :unicorn_config_path, -> { File.join(current_path, "config", "unicorn", "#{fetch(:unicorn_rack_env)}.rb") }
+    set :unicorn_config_path, -> { File.join("#{current_path}/backend", "config", "unicorn", "#{fetch(:unicorn_rack_env)}.rb") }
     set :unicorn_roles, -> { :app }
     set :unicorn_options, -> { "" }
     set :unicorn_restart_sleep_time, 3
@@ -14,7 +14,7 @@ namespace :unicorn do
   desc "Start Unicorn"
   task :start do
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         if test("[ -e #{fetch(:unicorn_pid)} ] && kill -0 #{pid}")
           info "unicorn is running..."
         else
@@ -29,7 +29,7 @@ namespace :unicorn do
   desc "Stop Unicorn (QUIT)"
   task :stop do
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         if test("[ -e #{fetch(:unicorn_pid)} ]")
           if test("kill -0 #{pid}")
             info "stopping unicorn..."
@@ -49,7 +49,7 @@ namespace :unicorn do
   task :reload do
     invoke "unicorn:start"
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         info "reloading..."
         execute :kill, "-s HUP", pid
       end
@@ -60,7 +60,7 @@ namespace :unicorn do
   task :restart do
     invoke "unicorn:start"
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         info "unicorn restarting..."
         execute :kill, "-s USR2", pid
       end
@@ -76,7 +76,7 @@ namespace :unicorn do
   task :legacy_restart do
     invoke "unicorn:restart"
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         execute :sleep, fetch(:unicorn_restart_sleep_time)
         if test("[ -e #{fetch(:unicorn_pid)}.oldbin ]")
           execute :kill, "-s QUIT", pid_oldbin
@@ -88,7 +88,7 @@ namespace :unicorn do
   desc "Add a worker (TTIN)"
   task :add_worker do
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         info "adding worker"
         execute :kill, "-s TTIN", pid
       end
@@ -98,7 +98,7 @@ namespace :unicorn do
   desc "Remove a worker (TTOU)"
   task :remove_worker do
     on roles(fetch(:unicorn_roles)) do
-      within current_path do
+      within "#{current_path}/backend" do
         info "removing worker"
         execute :kill, "-s TTOU", pid
       end
